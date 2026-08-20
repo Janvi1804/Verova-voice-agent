@@ -213,7 +213,7 @@
     ctx.fill();
     ctx.restore();
 
-    animationFrameId = requestAnimationFrame(rendetOrb);
+    animationFrameId = requestAnimationFrame(renderOrb);
   }
 
 
