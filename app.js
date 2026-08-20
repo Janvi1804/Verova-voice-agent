@@ -380,45 +380,45 @@
       return;
     }
 
-    // Priority 1: Try Edge-TTS Python Backend Server at /api/tts
-    try {
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const endpoint = isLocalhost ? 'http://localhost:8000/api/tts' : '/api/tts';
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: text,
-          voice: CONFIG.voicePersona,
-          rate: `+${Math.round((CONFIG.speed - 1) * 50)}%`,
-          pitch: `+${CONFIG.pitch}Hz`
-        })
-      });
+    // Priority 1: Try Edge-TTS Python Backend Server if on localhost
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      try {
+        const response = await fetch('http://localhost:8000/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            voice: CONFIG.voicePersona,
+            rate: `+${Math.round((CONFIG.speed - 1) * 50)}%`,
+            pitch: `+${CONFIG.pitch}Hz`
+          })
+        });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const audioUrl = URL.createObjectURL(blob);
-        activeAudio = new Audio(audioUrl);
-        
-        activeAudio.onended = () => {
-          URL.revokeObjectURL(audioUrl);
-          activeAudio = null;
-          setState(STATES.IDLE);
-          if (isCallActive && CONFIG.handsFree) {
-            setTimeout(() => startListening(), 400);
-          }
-        };
+        if (response.ok) {
+          const blob = await response.blob();
+          const audioUrl = URL.createObjectURL(blob);
+          activeAudio = new Audio(audioUrl);
+          
+          activeAudio.onended = () => {
+            URL.revokeObjectURL(audioUrl);
+            activeAudio = null;
+            setState(STATES.IDLE);
+            if (isCallActive && CONFIG.handsFree) {
+              setTimeout(() => startListening(), 400);
+            }
+          };
 
-        activeAudio.onerror = () => {
-          speakNativeBrowser(text);
-        };
+          activeAudio.onerror = () => {
+            speakNativeBrowser(text);
+          };
 
-        await activeAudio.play();
-        return;
+          await activeAudio.play();
+          return;
+        }
+      } catch (e) {
+        // Backend not reachable on localhost, fallback to Web Speech API
       }
-    } catch (e) {
-      // Backend not reachable, fallback to Web Speech API
-      console.log('Edge-TTS Backend offline, using Browser TTS');
     }
 
     speakNativeBrowser(text);
@@ -433,29 +433,36 @@
 
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = CONFIG.speed;
+    utter.rate = CONFIG.speed || 1.0;
     utter.pitch = 1.0;
 
     // Prefer Indian English or Hindi voices
-    const voices = window.speechSynthesis.getVoices();
-    const indianVoice = voices.find(v => 
-      v.lang.matchs(/hi-IN|en-IN/) || 
-      v.name.includes('Hindi') || 
-      v.name.includes('Swara') ||
-      v.name.includes('India')
-    );
+    const voices = window.speechSynthesis.getVoices() || [];
+    const isMale = CONFIG.voicePersona && CONFIG.voicePersona.includes('Madhur');
+    
+    let indianVoice = voices.find(v => {
+      const lang = (v.lang || '').toLowerCase();
+      const name = (v.name || '').toLowerCase();
+      if (isMale) {
+        return (lang.includes('hi') || lang.includes('in')) && (name.includes('male') || name.includes('madhur') || name.includes('david'));
+      }
+      return lang.includes('hi') || lang.includes('in') || name.includes('hindi') || name.includes('swara') || name.includes('female');
+    }) || voices.find(v => (v.lang || '').toLowerCase().includes('in')) || voices[0];
 
     if (indianVoice) utter.voice = indianVoice;
 
     utter.onend = () => {
       setState(STATES.IDLE);
       if (isCallActive && CONFIG.handsFree) {
-        setTimeout(() => startListening(), 500);
+        setTimeout(() => startListening(), 400);
       }
     };
 
     utter.onerror = () => {
       setState(STATES.IDLE);
+      if (isCallActive && CONFIG.handsFree) {
+        setTimeout(() => startListening(), 400);
+      }
     };
 
     window.speechSynthesis.speak(utter);
