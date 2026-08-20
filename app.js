@@ -363,9 +363,11 @@
       return;
     }
 
-    // Priority 1: Try Edge-TTS Python Backend Server at /tts
+    // Priority 1: Try Edge-TTS Python Backend Server at /api/tts
     try {
-      const response = await fetch(`http://localhost:8000/api/tts`, {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const endpoint = isLocalhost ? 'http://localhost:8000/api/tts' : '/api/tts';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
