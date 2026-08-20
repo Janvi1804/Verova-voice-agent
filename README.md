@@ -1,4 +1,4 @@
-﻿# 🎙️ Verova Voice Agent • Hinglish AI Receptionist
+# 🎙️ Verova Voice Agent • Hinglish AI Receptionist
 
 An AI voice receptionist web application inspired by **Sarvam AI**, designed with a natural, conversational **Hinglish** (Hindi + English mix) persona. The agent follows strict appointment booking rules with step-by-step slot verification and booking tools, powered by **Groq (Llama 3.1)** and **Microsoft Edge-TTS (Swara & Madhur Neural Voices)**.
 
