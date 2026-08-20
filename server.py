@@ -114,6 +114,11 @@ def create_app():
     app.router.add_static('/', path=BASE_DIR, show_index=True)
     return app
 
+# Top-level exports for Vercel / WSGI / ASGI / Serverless platforms
+app = create_app()
+application = app
+handler = app
+
 if __name__ == '__main__':
     import sys
     try:
@@ -121,7 +126,6 @@ if __name__ == '__main__':
             sys.stdout.reconfigure(encoding='utf-8')
     except Exception:
         pass
-    app = create_app()
     print('=====================================================')
     print('Sarvam-Style Hinglish Voice Receptionist Server')
     print('Edge-TTS Engine: hi-IN-SwaraNeural / hi-IN-MadhurNeural')
