@@ -358,7 +358,7 @@
 
   // ===================================================================
   // SPEECH SYNTHESIS (TTS - EDGE-TTS & WEB SPEECH FALLBACK)
-  // ====================================================================
+  // ===================================================================
   async function speakHinglish(text) {
     stopListening();
     stopSpeaking();
@@ -374,53 +374,48 @@
     setState(STATES.SPEAKING);
     dom.liveSubtitle.textContent = `"${text}"`;
 
-    // System Fallback if Browser Native mode
-    if (CONFIG.voicePersona === 'browser-native') {
-      speakNativeBrowser(text);
-      return;
-    }
+    // Priority 1: Try Microsoft Edge Neural Voice Endpoint (Serverless / Localhost)
+    try {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const endpoint = isLocalhost ? 'http://localhost:8000/api/tts' : '/api/tts';
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text,
+          voice: CONFIG.voicePersona || 'hi-IN-SwaraNeural',
+          rate: `+${Math.round((CONFIG.speed - 1) * 50)}%`,
+          pitch: `+${CONFIG.pitch}Hz`
+        })
+      });
 
-    // Priority 1: Try Edge-TTS Python Backend Server if on localhost
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalhost) {
-      try {
-        const response = await fetch('http://localhost:8000/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: text,
-            voice: CONFIG.voicePersona,
-            rate: `+${Math.round((CONFIG.speed - 1) * 50)}%`,
-            pitch: `+${CONFIG.pitch}Hz`
-          })
-        });
+      if (response.ok) {
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        activeAudio = new Audio(audioUrl);
+        
+        activeAudio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          activeAudio = null;
+          setState(STATES.IDLE);
+          if (isCallActive && CONFIG.handsFree) {
+            setTimeout(() => startListening(), 400);
+          }
+        };
 
-        if (response.ok) {
-          const blob = await response.blob();
-          const audioUrl = URL.createObjectURL(blob);
-          activeAudio = new Audio(audioUrl);
-          
-          activeAudio.onended = () => {
-            URL.revokeObjectURL(audioUrl);
-            activeAudio = null;
-            setState(STATES.IDLE);
-            if (isCallActive && CONFIG.handsFree) {
-              setTimeout(() => startListening(), 400);
-            }
-          };
+        activeAudio.onerror = () => {
+          speakNativeBrowser(text);
+        };
 
-          activeAudio.onerror = () => {
-            speakNativeBrowser(text);
-          };
-
-          await activeAudio.play();
-          return;
-        }
-      } catch (e) {
-        // Backend not reachable on localhost, fallback to Web Speech API
+        await activeAudio.play();
+        return;
       }
+    } catch (e) {
+      // Endpoint fallback
     }
 
+    // Priority 2: High-Quality Browser Speech Synthesis
     speakNativeBrowser(text);
   }
 
@@ -433,23 +428,29 @@
 
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
-    utter.rate = CONFIG.speed || 1.0;
-    utter.pitch = 1.0;
+    utter.rate = CONFIG.speed || 0.95;
+    utter.pitch = 1.05;
+    utter.lang = 'hi-IN'; // Force Hindi/Indian locale
 
-    // Prefer Indian English or Hindi voices
     const voices = window.speechSynthesis.getVoices() || [];
     const isMale = CONFIG.voicePersona && CONFIG.voicePersona.includes('Madhur');
     
-    let indianVoice = voices.find(v => {
+    // Pick natural Hindi or Indian English voice
+    let selectedVoice = voices.find(v => {
       const lang = (v.lang || '').toLowerCase();
       const name = (v.name || '').toLowerCase();
       if (isMale) {
         return (lang.includes('hi') || lang.includes('in')) && (name.includes('male') || name.includes('madhur') || name.includes('david'));
       }
-      return lang.includes('hi') || lang.includes('in') || name.includes('hindi') || name.includes('swara') || name.includes('female');
-    }) || voices.find(v => (v.lang || '').toLowerCase().includes('in')) || voices[0];
+      return (lang.includes('hi') || lang.includes('in')) && (name.includes('swara') || name.includes('hindi') || name.includes('natural') || name.includes('female') || name.includes('online'));
+    }) || voices.find(v => (v.lang || '').toLowerCase().includes('hi-in'))
+       || voices.find(v => (v.lang || '').toLowerCase().includes('en-in'))
+       || voices.find(v => (v.lang || '').toLowerCase().includes('hi'))
+       || voices[0];
 
-    if (indianVoice) utter.voice = indianVoice;
+    if (selectedVoice) {
+      utter.voice = selectedVoice;
+    }
 
     utter.onend = () => {
       setState(STATES.IDLE);
@@ -523,7 +524,7 @@
   ];
 
   async function executeTool(name, args) {
-    setState(STATES.TOOL_CALLING, `Executing ${wame}...`);
+    setState(STATES.TOOL_CALLING, `Executing ${name}...`);
     await new Promise(r => setTimeout(r, 600)); // simulated response latency
 
     if (name === 'CheckAvailability') {
