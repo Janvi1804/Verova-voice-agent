@@ -1,6 +1,6 @@
-# 🎙️ Verova Voice Agent • Hinglish AI Receptionist
+﻿# 🎙️ Verova Voice Agent • Hinglish AI Receptionist
 
-An AI voice receptionist web application inspired by **Sarvam AI**, designed with a natural, conversational **Hinglish** (Hindi + English mix) persona. The agent follows strict appointment booking rules with step-by-step slot verification and booking tools, powered by **Groq (Llama 3.1)** and **Microsoft Edge-TTS (Swara & Madhur Neural Voices)**.
+An AI voice receptionist web application inspired by **Sarvam AI**, designed with a natural, conversational **Hinglish** (Hindi + English mix) persona. The agent follows strict appointment booking rules with step-by-step slot verification and booking tools, powered by **Groq (Llama 3.1)** and **Microsoft Edge-TTS / Web Speech (Swara & Madhur Neural Voices)**.
 
 ---
 
@@ -24,7 +24,7 @@ An AI voice receptionist web application inspired by **Sarvam AI**, designed wit
 
 4. **Dual TTS & Voice Engine**:
    - **Edge-TTS Backend:** Microsoft Azure / Edge Neural Voices (`hi-IN-SwaraNeural` warm female receptionist and `hi-IN-MadhurNeural` clear male receptionist).
-   - **Browser Fallback:** Zero-configuration Indian English / Hindi voice synthesis with Web Speech API.
+   - **Browser Native:** Zero-configuration Indian English / Hindi voice synthesis with Web Speech API on cloud deployments (Vercel).
 
 5. **Built-in Smart Offline Engine**:
    - Runs out-of-the-box immediately without needing an external API key, using intelligent Hinglish NLP entity parsing for dates (*kal, aaj, 21 August, Monday*), times (*2 baje, 10 am, dopahar 2 baje*), and names (*Rahul, Amit, Pooja*).
@@ -34,21 +34,21 @@ An AI voice receptionist web application inspired by **Sarvam AI**, designed wit
 
 ## 🚀 How to Run
 
-### Option 1: Run with Python Server (Recommended for High-Fidelity Neural Voices)
+### Option 1: Cloud Deployment (Vercel / Netlify / Web)
+Deploys instantly as a fast static web application with zero configuration!
+👉 **[https://verova-voice-agent-eb81.vercel.app](https://verova-voice-agent-eb81.vercel.app)**
+
+### Option 2: Local Run with Python Server (For Neural Edge-TTS)
 1. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r server/requirements.txt
    ```
-2. Start the async server:
+2. Start the local server:
    ```bash
-   python server.py
+   python server/server.py
    ```
 3. Open your browser at:
    👉 **`http://localhost:8000`**
-
-### Option 2: Standalone Browser Launch (Zero Installation)
-Simply open `index.html` directly in Google Chrome, Microsoft Edge, or Brave:
-👉 Double click `index.html`
 
 ---
 
@@ -57,13 +57,14 @@ Simply open `index.html` directly in Google Chrome, Microsoft Edge, or Brave:
 ```
 Verova-voice-agent/
 │
-├── index.html        # Glassmorphic Sarvam UI layout, Voice Orb, Transcript & Drawer
-├── style.css         # Dark futuristic styling, animations, and responsive layout
-├── app.js            # Audio visualizer, STT, Groq Llama 3.1 + Tool Calling, and TTS Player
-├── server.py         # Async Python server with Microsoft Edge-TTS streaming endpoint
-├── requirements.txt  # Python package dependencies (aiohttp, edge-tts)
-├── .gitignore        # Standard ignore file
-└── README.md         # Documentation and setup instructions
+├── index.html            # Glassmorphic Sarvam UI layout, Voice Orb, Transcript & Drawer
+├── style.css             # Dark futuristic styling, animations, and responsive layout
+├── app.js                # Audio visualizer, STT, Groq Llama 3.1 + Tool Calling, and TTS Player
+├── server/
+│   ├── server.py         # Async Python server with Microsoft Edge-TTS streaming endpoint
+│   └── requirements.txt  # Python package dependencies (aiohttp, edge-tts)
+├── .gitignore            # Standard ignore file
+└── README.md             # Documentation and setup instructions
 ```
 
 ---
