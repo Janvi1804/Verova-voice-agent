@@ -51,7 +51,7 @@
   function flOatParse(val) { const p = parseFloat(val); return isNaN(p) ? 1.0 : p;
   }
 
-  // DOMME Elements
+  // DOM Elements
   const dom = {
     headerStatusText: document.getElementById('headerStatusText'),
     activeVoiceName: document.getElementById('activeVoiceName'),
@@ -61,7 +61,7 @@
     chkAutoMode: document.getElementById('chkAutoMode'),
     orbCanvas: document.getElementById('orbCanvas'),
     orbAmbientGlow: document.getElementById('orbAmbientGlow'),
-    soundWaveBars: document.getElementById('soundWaveBarss'),
+    soundWaveBars: document.getElementById('soundWaveBars'),
     mainStateLabel: document.getElementById('mainStateLabel'),
     liveSubtitle: document.getElementById('liveSubtitle'),
     btnCallToggle: document.getElementById('btnCallToggle'),
@@ -74,11 +74,14 @@
     textInputForm: document.getElementById('textInputForm'),
     txtUserInput: document.getElementById('txtUserInput'),
     transcriptContainer: document.getElementById('transcriptContainer'),
+    btnOpenAppointments: document.getElementById('btnOpenAppointments'),
+    btnCloseDrawer: document.getElementById('btnCloseDrawer'),
     appointmentsDrawer: document.getElementById('appointmentsDrawer'),
     drawerOverlay: document.getElementById('drawerOverlay'),
     appointmentsList: document.getElementById('appointmentsList'),
     statTotalBooked: document.getElementById('statTotalBooked'),
     statTotalAvailable: document.getElementById('statTotalAvailable'),
+    btnOpenSettings: document.getElementById('btnOpenSettings'),
     settingsModal: document.getElementById('settingsModal'),
     rulesModal: document.getElementById('rulesModal')
   };
@@ -231,31 +234,45 @@
     };
 
     const info = stateMap[state] || stateMap[STATES.IDLE];
-    dom.headerStatusText.textContent = info.text;
-    dom.mainStateLabel.textContent = customMsg || info.text;
+    if (dom.headerStatusText) dom.headerStatusText.textContent = info.text;
+    if (dom.mainStateLabel) dom.mainStateLabel.textContent = customMsg || info.text;
 
-    if (state === STATES.SPEAKING) {
-      dom.soundWaveBars.classList.add('active');
-    } else {
-      dom.soundWaveBars.classList.remove('active');
+    if (dom.soundWaveBars) {
+      if (state === STATES.SPEAKING) {
+        dom.soundWaveBars.classList.add('active');
+      } else {
+        dom.soundWaveBars.classList.remove('active');
+      }
     }
 
-    if (state === STATES.LISTENING) {
-      dom.btnMicToggle.classList.add('active');
-    } else {
-      dom.btnMicToggle.classList.remove('active');
+    if (dom.btnMicToggle) {
+      if (state === STATES.LISTENING) {
+        dom.btnMicToggle.classList.add('active');
+      } else {
+        dom.btnMicToggle.classList.remove('active');
+      }
     }
   }
 
   function updateStepBadges() {
     const s = bookingTracker;
-    document.getElementById('stepGreet').classList.add('completed');
+    const g = document.getElementById('stepGreet');
+    if (g) g.classList.add('completed');
 
-    if (s.date) document.getElementById('stepDate').classList.add('completed');
-    if (s.time) document.getElementById('stepTime').classList.add('completed');
-    if (s.checked) document.getElementById('stepCheck').classList.add('completed');
-    if (s.name) document.getElementById('stepName').classList.add('completed');
-    if (s.booked) document.getElementById('stepBook').classList.add('completed');
+    const d = document.getElementById('stepDate');
+    if (d && s.date) d.classList.add('completed');
+
+    const t = document.getElementById('stepTime');
+    if (t && s.time) t.classList.add('completed');
+
+    const c = document.getElementById('stepCheck');
+    if (c && s.checked) c.classList.add('completed');
+
+    const n = document.getElementById('stepName');
+    if (n && s.name) n.classList.add('completed');
+
+    const b = document.getElementById('stepBook');
+    if (b && s.booked) b.classList.add('completed');
   }
 
 
@@ -860,10 +877,10 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
   // ===================================================================
   function setupEventListeners() {
     // Call Toggle
-    dom.btnCallToggle.addEventListener('click', toggleCall);
+    dom.btnCallToggle?.addEventListener('click', toggleCall);
 
     // Mic Toggle
-    dom.btnMicToggle.addEventListener('click', () => {
+    dom.btnMicToggle?.addEventListener('click', () => {
       if (isRecognizing) {
         stopListening();
         setState(STATES.IDLE, 'Mic Muted');
@@ -874,24 +891,26 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
     });
 
     // Mute Toggle
-    dom.btnMuteToggle.addEventListener('click', () => {
+    dom.btnMuteToggle?.addEventListener('click', () => {
       CONFIG.isMuted = !CONFIG.isMuted;
-      dom.btnMuteToggle.classList.toggle('muted', CONFIG.isMuted);
-      dom.speakerIcon.className = CONFIG.isMuted ? 'fa-solid fa-volume-slash' : 'fa-solid fa-volume-high';
+      dom.btnMuteToggle?.classList.toggle('muted', CONFIG.isMuted);
+      if (dom.speakerIcon) {
+        dom.speakerIcon.className = CONFIG.isMuted ? 'fa-solid fa-volume-slash' : 'fa-solid fa-volume-high';
+      }
     });
 
     // Hands-Free Toggle
-    dom.chkAutoMode.addEventListener('change', (e) => {
+    dom.chkAutoMode?.addEventListener('change', (e) => {
       CONFIG.handsFree = e.target.checked;
       localStorage.setItem('sarvam_hands_free', CONFIG.handsFree);
     });
 
     // Text Input Form
-    dom.textInputForm.addEventListener('submit', (e) => {
+    dom.textInputForm?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const txt = dom.txtUserInput.value;
-      if (!txt.trim()) return;
-      dom.txtUserInput.value = '';
+      const txt = dom.txtUserInput?.value;
+      if (!txt || !txt.trim()) return;
+      if (dom.txtUserInput) dom.txtUserInput.value = '';
       handleUserMsg(txt);
     });
 
@@ -899,39 +918,39 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
     document.querySelectorAll('.prompt-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         const text = chip.getAttribute('data-text');
-        handleUserMsg(text);
+        if (text) handleUserMsg(text);
       });
     });
 
     // Appointments Drawer Open/Close
-    dom.btnOpenAppointments.addEventListener('click', () => {
-      dom.appointmentsDrawer.classList.add('open');
-      dom.drawerOverlay.classList.add('open');
+    dom.btnOpenAppointments?.addEventListener('click', () => {
+      dom.appointmentsDrawer?.classList.add('open');
+      dom.drawerOverlay?.classList.add('open');
     });
 
-    dom.btnCloseDrawer.addEventListener('click', closeDrawer);
-    dom.drawerOverlay.addEventListener('click', closeDrawer);
+    dom.btnCloseDrawer?.addEventListener('click', closeDrawer);
+    dom.drawerOverlay?.addEventListener('click', closeDrawer);
 
     // Settings Modal
-    dom.btnOpenSettings.addEventListener('click', openSettings);
-    document.getElementById('btnCloseSettings').addEventListener('click', closeSettings);
-    document.getElementById('btnSaveSettings').addEventListener('click', saveSettings);
+    dom.btnOpenSettings?.addEventListener('click', openSettings);
+    document.getElementById('btnCloseSettings')?.addEventListener('click', closeSettings);
+    document.getElementById('btnSaveSettings')?.addEventListener('click', saveSettings);
 
     // Rules Modal
-    document.getElementById('btnOpenRules').addEventListener('click', () => {
-      dom.rulesModal.classList.add('open');
+    document.getElementById('btnOpenRules')?.addEventListener('click', () => {
+      dom.rulesModal?.classList.add('open');
     });
-    document.getElementById('btnCloseRules').addEventListener('click', () => dom.rulesModal.classList.remove('open'));
-    document.getElementById('btnUnderstandRules').addEventListener('click', () => dom.rulesModal.classList.remove('open'));
+    document.getElementById('btnCloseRules')?.addEventListener('click', () => dom.rulesModal?.classList.remove('open'));
+    document.getElementById('btnUnderstandRules')?.addEventListener('click', () => dom.rulesModal?.classList.remove('open'));
 
     // Clear & Export Transcript
-    document.getElementById('btnClearChat').addEventListener('click', () => {
-      dom.transcriptContainer.innerHTML = '';
+    document.getElementById('btnClearChat')?.addEventListener('click', () => {
+      if (dom.transcriptContainer) dom.transcriptContainer.innerHTML = '';
       conversationHistory = [];
       bookingTracker = { date: null, time: null, checked: false, name: null, booked: false, ref: null };
     });
 
-    document.getElementById('btnExportChat').addEventListener('click', () => {
+    document.getElementById('btnExportChat')?.addEventListener('click', () => {
       const txt = conversationHistory.map(q => `${q.role.toUpperCase()}: ${q.content}`).join('\n');
       const blob = new Blob([txt], { type: 'text/plain' });
       const a = document.createElement('a');
