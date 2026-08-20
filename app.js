@@ -959,8 +959,16 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
         dom.callTimer.textContent = `${mins}:${secs}`;
       }, 1000);
 
-      // Greet User
+      // Step 1: Proactive Receptionist Greeting
       const greeting = 'Namaste! Main aapki voice receptionist hoon. Main aapki appointment book karne mein kya sahayata kar sakti hoon?';
+      
+      // Update transcript, history and badges
+      dom.transcriptContainer.innerHTML = '';
+      conversationHistory = [{ role: 'assistant', content: greeting }];
+      bookingTracker = { date: null, time: null, checked: false, name: null, booked: false, ref: null };
+      
+      renderAgentMsg(greeting);
+      updateStepBadges();
       speakHinglish(greeting);
     } else {
       dom.btnCallToggle.classList.remove('btn-end-call');
