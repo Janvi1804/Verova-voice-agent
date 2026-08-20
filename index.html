@@ -1,0 +1,432 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sarvam AI • Hinglish Voice Receptionist</title>
+  
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons & FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-background">
+    <div class="glow-orb glow-top-left"></div>
+    <div class="glow-orb glow-bottom-right"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="sarvam-brand">
+          <div class="brand-logo-ring">
+            <span class="brand-letter">S</span>
+            <div class="pulse-ring"></div>
+          </div>
+          <div class="brand-meta">
+            <div class="brand-title">
+              <span class="brand-name">SARVAM <span class="gradient-text">VOICE</span></span>
+              <span class="agent-tag">RECEPTIONIST</span>
+            </div>
+            <p class="brand-sub">Hinglish Conversational AI • Groq Llama 3.1 & Edge-TTS</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="status-pill" id="headerStatusPill">
+          <span class="status-dot"></span>
+          <span class="status-text" id="headerStatusText">Ready to Talk</span>
+        </div>
+        <div class="meta-pill latency-pill" title="Round-trip Voice Latency">
+          <i class="fa-solid fa-bolt"></i>
+          <span id="latencyValue">~240ms</span>
+        </div>
+        <div class="meta-pill voice-pill" id="voiceIndicatorBadge" title="Current Neural Voice">
+          <i class="fa-solid fa-waveform-lines"></i>
+          <span id="activeVoiceName">Swara (Female)</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button class="icon-btn-text" id="btnOpenAppointments" title="View Booked Slots">
+          <i class="fa-solid fa-calendar-check"></i>
+          <span>Appointments</span>
+          <span class="badge-count" id="headerApptBadge">2</span>
+        </button>
+        <button class="icon-btn" id="btnOpenRules" title="View Receptionist Rules">
+          <i class="fa-solid fa-lightbulb"></i>
+        </button>
+        <button class="icon-btn" id="btnOpenSettings" title="Agent Settings & API Keys">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Stage -->
+    <main class="main-stage">
+      <!-- Left / Top: Voice Stage with 3D Glowing Visualizer Orb -->
+      <section class="voice-stage-card">
+        <div class="stage-header">
+          <div class="live-indicator-wrapper">
+            <span class="call-time-badge" id="callTimer">00:00</span>
+            <span class="live-tag"><i class="fa-solid fa-circle"></i> LIVE CALL</span>
+          </div>
+          <div class="mode-toggles">
+            <label class="hands-free-toggle" title="Continuous voice conversation without clicking">
+              <input type="checkbox" id="chkAutoMode" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label"><i class="fa-solid fa-headset"></i> Hands-Free</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3D Fluid Canvas Voice Orb -->
+        <div class="canvas-visualizer-container" id="visualizerContainer">
+          <div class="orb-ambient-glow" id="orbAmbientGlow"></div>
+          <canvas id="orbCanvas" width="400" height="400"></canvas>
+          
+          <!-- Center Mic Indicator Icon -->
+          <div class="orb-center-overlay" id="orbOverlayIcon">
+            <i class="fa-solid fa-microphone-lines" id="orbInnerIcon"></i>
+          </div>
+
+          <!-- Dynamic Equalizer Bars for Agent Speech -->
+          <div class="sound-wave-bars" id="soundWaveBars">
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+            <span class="wave-bar"></span>
+          </div>
+        </div>
+
+        <!-- State Badge & Dynamic Live Subtitle Banner -->
+        <div class="orb-status-display">
+          <div class="state-chip" id="mainStateChip">
+            <span class="pulse-indicator"></span>
+            <span id="mainStateLabel">Press 'Start Call' or speak in Hinglish</span>
+          </div>
+          
+          <div class="subtitle-banner" id="subtitleBanner">
+            <i class="fa-solid fa-comment-dots subtitle-icon"></i>
+            <span class="subtitle-text" id="liveSubtitle">"Namaste! Main aapki help kaise kar sakti hoon?"</span>
+          </div>
+        </div>
+
+        <!-- Hinglish Quick Starter Phrases Chips -->
+        <div class="quick-prompts-row">
+          <span class="quick-title"><i class="fa-solid fa-sparkles"></i> Try Spoken Hinglish:</span>
+          <div class="chips-scroll">
+            <button class="prompt-chip" data-text="Namaste, mujhe doctor ka appointment chahiye.">
+              "Namaste, mujhe appointment chahiye"
+            </button>
+            <button class="prompt-chip" data-text="Mujhe kal ka appointment book karna hai.">
+              "Mujhe kal ka appointment chahiye"
+            </button>
+            <button class="prompt-chip" data-text="Dopahar 2 baje ka slot khali hai kya?">
+              "Dopahar 2 baje"
+            </button>
+            <button class="prompt-chip" data-text="Mera naam Rahul Sharma hai.">
+              "Mera naam Rahul Sharma hai"
+            </button>
+            <button class="prompt-chip" data-text="Kal subah 10 baje ka appointment book kardo.">
+              "Kal subah 10 baje"
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Call Actions Toolbar -->
+        <div class="call-controls-bar">
+          <!-- Main Call Start / End Button -->
+          <button class="btn-call-action btn-start-call" id="btnCallToggle">
+            <div class="btn-icon-wrap">
+              <i class="fa-solid fa-phone" id="callIcon"></i>
+            </div>
+            <span class="btn-text" id="callBtnText">Start Call</span>
+          </button>
+
+          <!-- Mic Push-To-Talk Toggle Button -->
+          <button class="btn-mic-action" id="btnMicToggle" title="Click to Speak / Mute Mic">
+            <div class="mic-wave-ring"></div>
+            <i class="fa-solid fa-microphone" id="micIcon"></i>
+            <span class="mic-tooltip">Mic Active</span>
+          </button>
+
+          <!-- Speaker Mute Button -->
+          <button class="btn-tool-action" id="btnMuteToggle" title="Mute AI Speaker">
+            <i class="fa-solid fa-volume-high" id="speakerIcon"></i>
+          </button>
+
+          <!-- Text Fallback Input Form -->
+          <form class="text-input-form" id="textInputForm" onsubmit="return false;">
+            <input 
+              type="text" 
+              id="txtUserInput" 
+              class="chat-input-field" 
+              placeholder="Or type Hinglish message here (e.g. Kal 2 baje Rahul)..." 
+              autocomplete="off"
+            >
+            <button type="submit" class="btn-send-text" id="btnSendText" title="Send message">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Right / Bottom: Live Spoken Transcript & Tool Execution History -->
+      <section class="transcript-stage-card">
+        <div class="transcript-header">
+          <div class="t-header-title">
+            <i class="fa-solid fa-message-captions"></i>
+            <h3>Live Conversation & Tool Calls</h3>
+          </div>
+          <div class="t-header-actions">
+            <button class="btn-subtle" id="btnClearChat" title="Clear Conversation Log">
+              <i class="fa-solid fa-trash-can"></i> Clear
+            </button>
+            <button class="btn-subtle" id="btnExportChat" title="Export Transcript">
+              <i class="fa-solid fa-download"></i> Save
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Message Log Container -->
+        <div class="transcript-scroll-area" id="transcriptContainer">
+          <!-- Initial Welcome Message Card -->
+          <div class="message-card agent-message">
+            <div class="msg-avatar sarvam-avatar">
+              <i class="fa-solid fa-sparkles"></i>
+            </div>
+            <div class="msg-content-wrap">
+              <div class="msg-header">
+                <span class="msg-sender">Sarvam Receptionist (Swara)</span>
+                <span class="msg-time">Just now</span>
+              </div>
+              <div class="msg-body">
+                Namaste! Main aapki voice receptionist hoon. Main aapki appointment book karne mein kya sahayata kar sakti hoon?
+              </div>
+              <div class="msg-actions">
+                <button class="btn-audio-replay" onclick="window.replayVoice('Namaste! Main aapki voice receptionist hoon. Main aapki appointment book karne mein kya sahayata kar sakti hoon?')">
+                  <i class="fa-solid fa-play"></i> Replay Voice
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Status Bar -->
+        <div class="transcript-footer">
+          <div class="agent-workflow-steps">
+            <span class="step-badge" id="stepGreet"><i class="fa-solid fa-check"></i> Greet</span>
+            <span class="step-arrow">→</span>
+            <span class="step-badge" id="stepDate"><i class="fa-solid fa-calendar"></i> Date</span>
+            <span class="step-arrow">→</span>
+            <span class="step-badge" id="stepTime"><i class="fa-solid fa-clock"></i> Time</span>
+            <span class="step-arrow">→</span>
+            <span class="step-badge" id="stepCheck"><i class="fa-solid fa-bolt"></i> Check</span>
+            <span class="step-arrow">→</span>
+            <span class="step-badge" id="stepName"><i class="fa-solid fa-user"></i> Name</span>
+            <span class="step-arrow">→</span>
+            <span class="step-badge" id="stepBook"><i class="fa-solid fa-calendar-check"></i> Book</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Slide-Out Appointments Schedule Drawer -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <aside class="appointments-drawer" id="appointmentsDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <i class="fa-solid fa-calendar-days"></i>
+          <h2>Appointment Schedule</h2>
+        </div>
+        <button class="btn-close-drawer" id="btnCloseDrawer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="schedule-summary-box">
+          <div class="sum-item">
+            <span class="sum-num" id="statTotalBooked">2</span>
+            <span class="sum-label">Booked Slots</span>
+          </div>
+          <div class="sum-item">
+            <span class="sum-num" id="statTotalAvailable">4</span>
+            <span class="sum-label">Open Slots</span>
+          </div>
+          <div class="sum-item">
+            <span class="sum-num">Dr. Mehta</span>
+            <span class="sum-label">Lead Specialist</span>
+          </div>
+        </div>
+
+        <div class="appointments-list-container">
+          <h4 class="list-section-title">TODAY & UPCOMING SLOTS</h4>
+          <div class="appointments-list" id="appointmentsList">
+            <!-- Dynamic Slots Injected by JS -->
+          </div>
+        </div>
+
+        <div class="drawer-actions">
+          <button class="btn-secondary" id="btnResetSlots">
+            <i class="fa-solid fa-rotate-left"></i> Reset Schedule
+          </button>
+          <button class="btn-primary" id="btnAddMockSlot">
+            <i class="fa-solid fa-plus"></i> Add Mock Booking
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="fa-solid fa-sliders"></i>
+            <h3>Voice Agent Configuration</h3>
+          </div>
+          <button class="btn-close-modal" id="btnCloseSettings">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Groq Configuration -->
+          <div class="config-group">
+            <label class="config-label">
+              <span class="label-text"><i class="fa-solid fa-brain"></i> Groq API Key (Llama 3.1)</span>
+              <span class="label-hint">Optional: Leave empty to use Built-in Smart Offline Engine</span>
+            </label>
+            <div class="input-with-icon">
+              <input type="password" id="cfgGroqApiKey" placeholder="gsk_xxxxxxxxxxxxxxxxxxxx" class="cfg-input">
+              <button class="btn-toggle-view" id="btnToggleApiKeyView">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="config-group">
+            <label class="config-label">
+              <span class="label-text">Groq Model</span>
+            </label>
+            <select id="cfgGroqModel" class="cfg-select">
+              <option value="llama-3.1-70b-versatile" selected>Llama 3.1 70B Versatile (Recommended)</option>
+              <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Ultra Low Latency)</option>
+              <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
+            </select>
+          </div>
+
+          <!-- TTS Configuration -->
+          <div class="config-group">
+            <label class="config-label">
+              <span class="label-text"><i class="fa-solid fa-volume-high"></i> Voice Persona (TTS)</span>
+            </label>
+            <select id="cfgVoicePersona" class="cfg-select">
+              <option value="hi-IN-SwaraNeural" selected>hi-IN-SwaraNeural (Warm Female Receptionist)</option>
+              <option value="hi-IN-MadhurNeural">hi-IN-MadhurNeural (Clear Male Receptionist)</option>
+              <option value="en-IN-NeerjaNeural">en-IN-NeerjaNeural (Indian English Female)</option>
+              <option value="en-IN-PrabhatNeural">en-IN-PrabhatNeural (Indian English Male)</option>
+              <option value="browser-native">Browser Web Speech API (Native Fallback)</option>
+            </select>
+          </div>
+
+          <!-- Speech Rate & Pitch -->
+          <div class="config-row-2">
+            <div class="config-group">
+              <label class="config-label">
+                <span class="label-text">Speaking Speed (<span id="speedValue">1.0x</span>)</span>
+              </label>
+              <input type="range" id="cfgSpeed" min="0.8" max="1.3" step="0.05" value="1.0" class="cfg-range">
+            </div>
+
+            <div class="config-group">
+              <label class="config-label">
+                <span class="label-text">Speech Pitch (<span id="pitchValue">+0Hz</span>)</span>
+              </label>
+              <input type="range" id="cfgPitch" min="-20" max="20" step="2" value="0" class="cfg-range">
+            </div>
+          </div>
+
+          <!-- STT Language Mode -->
+          <div class="config-group">
+            <label class="config-label">
+              <span class="label-text"><i class="fa-solid fa-language"></i> Speech Recognition Mode</span>
+            </label>
+            <select id="cfgSttLang" class="cfg-select">
+              <option value="hi-IN" selected>Hindi / Hinglish Auto (hi-IN) - Recommended</option>
+              <option value="en-IN">Indian English (en-IN)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnResetSettings">Reset Defaults</button>
+          <button class="btn-primary" id="btnSaveSettings">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rules & Flow Info Modal -->
+    <div class="modal-overlay" id="rulesModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <h3>Receptionist Persona & Workflow Rules</h3>
+          </div>
+          <button class="btn-close-modal" id="btnCloseRules">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="modal-body rules-body">
+          <div class="rule-box">
+            <h4><i class="fa-solid fa-shield-halved"></i> 4 CORE RULES</h4>
+            <ul>
+              <li><strong>1. CONCISE RESPONSES:</strong> Spoken audio call format. Maximum 1-2 short sentences per turn.</li>
+              <li><strong>2. NO MARKDOWN:</strong> Never use bold (*), hashtags (#), or bullet points in spoken audio.</li>
+              <li><strong>3. ONE AT A TIME:</strong> Never ask multiple questions simultaneously. Collect one detail per turn.</li>
+              <li><strong>4. NO ASSUMPTIONS:</strong> Always call <code>CheckAvailability</code> before asking for user name.</li>
+            </ul>
+          </div>
+
+          <div class="workflow-box">
+            <h4><i class="fa-solid fa-list-ol"></i> APPOINTMENT BOOKING WORKFLOW</h4>
+            <ol>
+              <li><strong>Step 1:</strong> Greet warmly in Hinglish and ask how you can help.</li>
+              <li><strong>Step 2:</strong> Collect Preferred Date (e.g. <em>"Kal", "Today", "21 August"</em>).</li>
+              <li><strong>Step 3:</strong> Collect Preferred Time (e.g. <em>"Dopahar 2 baje", "10 AM"</em>).</li>
+              <li><strong>Step 4:</strong> Call <code>CheckAvailability(date, time)</code> tool. If unavailable, apologize & request another slot.</li>
+              <li><strong>Step 5:</strong> Ask for User's Name (e.g. <em>"Kya main aapka naam jaan sakti hoon?"</em>).</li>
+              <li><strong>Step 6:</strong> Call <code>BookAppointment(name, date, time)</code> tool.</li>
+              <li><strong>Step 7:</strong> Confirm appointment with reference number and say warm goodbye!</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnUnderstandRules">Got it!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
