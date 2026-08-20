@@ -690,14 +690,60 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
   }
 
 
-  // ==================================================================
-  // SMART OFFLINE HINGLISH STATE MACHINE (ZERO CONFIG FALLBACK)
+  // ===================================================================
+  // SMART OFFLINE HINGLISH STATE MACHINE (SARVAM-INSPIRED NLP ENGINE)
   // ===================================================================
   async function runOfflineStateMachine(text) {
-    const lower = text.toLowerCase();
+    const lower = text.toLowerCase().trim();
     let response = '';
 
-    // Entity Extraction for Dates, Times, and Names
+    // 1. Interrupt / Silence / Stop Intent
+    if (/^(chup|chup raho|shant|shant raho|stop|ruk jao|ruko|quiet|shut up|wait|pause|hold on|bas karo)$/i.test(lower) || 
+        /(chup raho|shant raho|stop talking|shut up|chup ho jao)/i.test(lower)) {
+      response = 'Theek hai, main hold par hoon. Jab bhi aapko baat karni ho, bas boliye.';
+      conversationHistory.push({ role: 'assistant', content: response });
+      renderAgentMsg(response);
+      speakHinglish(response);
+      return;
+    }
+
+    // 2. Cancellation / Rejection Intent
+    if (/(nahi chahiye|cancel|rehne do|kuch nahi|baad me|not now|nahi karna|don't want|dont want|leave it)/i.test(lower) ||
+        (/^(nahi|no|nope|nah)$/i.test(lower) && !bookingTracker.checked)) {
+      response = 'Ji theek hai, koi baat nahi. Jab bhi aapko appointment lena ho, aap dobara call kar sakte hain. Have a great day!';
+      conversationHistory.push({ role: 'assistant', content: response });
+      renderAgentMsg(response);
+      speakHinglish(response);
+      return;
+    }
+
+    // 3. Courtesy / Gratitude / Goodbye Intent
+    if (/(thank you|thanks|shukriya|dhanyawad|dhanyavad|bye|alvida|good night|take care)/i.test(lower)) {
+      response = 'Aapka bahut-bahut swagat hai! Agar aur koi sahayata chahiye ho toh zaroor batayein. Have a wonderful day!';
+      conversationHistory.push({ role: 'assistant', content: response });
+      renderAgentMsg(response);
+      speakHinglish(response);
+      return;
+    }
+
+    // 4. General Inquiries (Doctor / Clinic / Timing / Identity)
+    if (/(doctor kaun|doctor name|kisko dikhana|specialist|timing|address|kahan aana|fees|fees kitni|charges)/i.test(lower)) {
+      response = 'Hamare clinic me Dr. Mehta available hain jo general health specialist hain. Clinic Room 102 me hai. Kya aap unke sath appointment book karna chahenge?';
+      conversationHistory.push({ role: 'assistant', content: response });
+      renderAgentMsg(response);
+      speakHinglish(response);
+      return;
+    }
+
+    if (/(kaise ho|kya haal|who are you|kaun ho|tum kaun|aap kaun)/i.test(lower)) {
+      response = 'Main badhiya hoon! Main Sarvam AI voice receptionist hoon. Main aapki doctor appointment book karne mein sahayata kar sakti hoon.';
+      conversationHistory.push({ role: 'assistant', content: response });
+      renderAgentMsg(response);
+      speakHinglish(response);
+      return;
+    }
+
+    // Entity Extraction
     const dateMatch = lower.match(/(kal|aaj|parso|today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+\s*(aug|august|sep|september|oct|october|nov|dec|jan|feb|mar|apr|may|jun|jul))/i);
     const timeMatch = lower.match(/(\d{1,2}(:\d{2})?\s*(baje|pm|am|o'clock)?)/i) || lower.match(/(dopahar\s*\d+|subah\s*\d+|shaam\s*\d+)/i);
     const nameMatch = text.match(/(?:mera naam|my name is|naam|name)\s+([A-Za-z]+)/i);
@@ -709,48 +755,47 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
       bookingTracker.time = timeMatch[0];
     }
 
-    // Step 1: Greeting / Initial
+    // Workflow Step 1: Greeting
     if (lower.includes('hello') || lower.includes('namaste') || lower.includes('hi') || lower.includes('karna hai') || lower.includes('chahiye')) {
       if (!bookingTracker.date) {
-        response = 'Namaste! Main check kar leti hoon. Aap kis din ka appointment lena chahenge?';
+        response = 'Namaste! Main check kar leti hoon. Aap kis din ka appointment book karna chahenge?';
       } else if (!bookingTracker.time) {
-        response = `Zaroor! ${bookingTracker.date} ko aap kis time aana chahenge?`;
+        response = `Zaroor! ${bookingTracker.date} ko aap kis samay aana chahenge — jaise subah 11 baje ya dopahar 2 baje?`;
       }
     }
-    // Step 2 & 3: Collect Date and Time
+    // Workflow Step 2: Date
     else if (!bookingTracker.date) {
       if (dateMatch) {
         bookingTracker.date = dateMatch[0];
-        response = `Zaroor, ${bookingTracker.date} ko aap kis time aana chahenge?`;
+        response = `Theek hai, ${bookingTracker.date} ko aap kis samay aana chahenge?`;
       } else {
-        response = 'Zaroor, aap kis date ya kis din ka appointment chahte hain?';
+        response = 'Ji, aap kis date ya kis din ka appointment chahte hain — jaise aaj ya kal?';
       }
     } 
+    // Workflow Step 3 & 4: Time & Check Availability
     else if (!bookingTracker.time) {
       if (timeMatch) {
         bookingTracker.time = timeMatch[0];
-        // Step 4: Trigger CheckAvailability Tool
         const toolResult = await executeTool('CheckAvailability', { date: bookingTracker.date, time: bookingTracker.time });
         const parsed = JSON.parse(toolResult);
         if (parsed.status === 'unavailable') {
           bookingTracker.time = null;
           response = `Maaf kijiyega, ${parsed.reason}. Kya aap doosra time bata sakte hain?`;
         } else {
-          // Step 5: Ask for Name
-          response = `${bookingTracker.time} ka slot khali hai. Kya main aapka naam jaan sakti hoon?`;
+          response = `${bookingTracker.time} ka slot available hai. Booking confirm karne ke liye kya main aapka naam jaan sakti hoon?`;
         }
       } else {
-        response = `${bookingTracker.date} ko aap kis time par aana chahenge?`;
+        response = `${bookingTracker.date} ko aap kis time par aana chahenge — jaise 10 AM ya 2 PM?`;
       }
     }
-    // Step 4 & 5: Check then Name
+    // Workflow Step 5: Check Availability if pending
     else if (!bookingTracker.checked) {
       const toolResult = await executeTool('CheckAvailability', { date: bookingTracker.date, time: bookingTracker.time });
       response = `${bookingTracker.time} ka slot available hai. Kya main aapka naam jaan sakti hoon?`;
     }
-    // Step 6 & 7: Book Appointment & Confirmation
+    // Workflow Step 6 & 7: Book Appointment with Name
     else if (!bookingTracker.booked) {
-      let name = 'Rahul Sharma';
+      let name = 'Patient';
       if (nameMatch && nameMatch[1]) name = nameMatch[1];
       else if (text.trim().split(/\s+/).length <= 3) name = text.trim();
 
@@ -760,7 +805,7 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
         time: bookingTracker.time
       });
       const parsed = JSON.parse(bookRes);
-      response = `Aapka appointment ${bookingTracker.date}, ${bookingTracker.time} ko confirm ho gaya hai. Reference number hai ${parsed.referenceId}. Thank you and have a great day!`;
+      response = `Dhanyawad ${name} ji! Aapka appointment ${bookingTracker.date}, ${bookingTracker.time} ko confirm ho gaya hai. Reference number hai ${parsed.referenceId}. Thank you and have a great day!`;
     } else {
       response = 'Aapka appointment already confirm ho chuka hai. Kya main aapki koi aur sahayata kar sakti hoon?';
     }
