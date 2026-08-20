@@ -1050,7 +1050,7 @@ You: (Triggers CheckAvailability) "2 baje ka slot khali hai. Kya main aapka naam
 
   function getCurrentTimeString() {
     const d = new Date();
-    return d.localeTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   function escapeHTML(str) {
